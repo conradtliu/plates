@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+    Avatar,
     Box,
     Button,
     Divider,
@@ -95,6 +96,23 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         }
     };
 
+    const shareItem = (plateIndexes?: number[]) => {
+        if(!plateIndexes){
+            var split = Number((item / plates.length).toFixed(2));
+            var splitId = (Math.random() * 100).toString();
+            plates.forEach(plate => {
+                plate.total += split;
+                plate.items.push({
+                    id: splitId,
+                    cost: split
+                })
+            });
+            setPlates([...plates]);
+            setRemainder(remainder - item);
+        }
+        setItem(0);
+    }
+
     const deleteItem = (plate: Plate, item: Expense) => {
         plate.items = plate.items.filter(items => items.id !== item.id);
         plate.total -= item.cost;
@@ -105,17 +123,13 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 ...plates
             ]
         )
-    }
-
-    React.useEffect(() => {
-        console.log(plates);
-    }, [plates]);
+    };
 
     const onChangeCost = React.useCallback((e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
         if (!isNaN(Number(e.currentTarget.value))){
             switch(field){
                 case 'sub':
-                    setSubtotal(Number(e.currentTarget.value));
+                    setSubtotal(Number(Number(e.currentTarget.value).toFixed(2)));
                     break;
                 case 'tax':
                     setTax(Number(e.currentTarget.value));
@@ -216,8 +230,10 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 <Box sx={{width: '100%', justifyContent: 'center'}}>
             <InputLabel>Tip:</InputLabel>
                 <Grid container spacing={2}  alignItems='center' className='tip'>
+                    <Grid item/>
                     <Grid item xs>
                     <Slider
+                        sx={{width: '50%', justifyContent: 'center', justifySelf: 'center'}}
                         min={0}
                         max={50}
                         value={tip}
@@ -234,6 +250,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             max: 50,
                             type: 'number'
                         }}
+                        endAdornment={<InputAdornment position='end'>%</InputAdornment>}
                     />
                     </Grid>
                 </Grid>
@@ -278,7 +295,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             error={item > remainder}
                             helperText={item > remainder? 'Item costs more than remainder of bill!' : ''}
                         />
-                        {item > 0 &&  item <= remainder && <Button variant='contained' onClick={() => {}}>Share Item</Button>}
+                        {item > 0 &&  item <= remainder && <Button variant='contained' onClick={() => {shareItem()}}>Share Item</Button>}
                     </div>}
                 </div>
             </>
@@ -295,8 +312,8 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             return <List>
                                     <ListItem
                                         key={index}
-                                        >
-                                        <ListItemAvatar>Person {index+1}</ListItemAvatar>
+                                    >
+                                        <ListItemAvatar><Avatar>P{index+1}</Avatar></ListItemAvatar>
                                         <ListItemText>${calculatePerson(index)}</ListItemText>
                                         {split ==='Itemize' && 
                                             <Button
@@ -307,20 +324,21 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                             </Button>
                                         }
                                     </ListItem>
-                                    {plate.items?.map((item, itemIndex) => {
-                                        return <ListItem
-                                            key={item.id}
-                                            secondaryAction={
-                                                <IconButton onClick={() => deleteItem(plate, item)}>
-                                                    <DeleteOutlinedIcon/>
-                                                </IconButton>
-                                            }
-                                        >
-                                            <ListItemText
-                                                primary={`Item ${itemIndex + 1}`}
-                                                secondary={item.cost}
-                                            />
-                                        </ListItem>
+                                    {split === 'Itemize' && 
+                                        plate.items?.map((item, itemIndex) => {
+                                            return <ListItem
+                                                key={item.id}
+                                                secondaryAction={
+                                                    <IconButton onClick={() => deleteItem(plate, item)}>
+                                                        <DeleteOutlinedIcon/>
+                                                    </IconButton>
+                                                }
+                                            >
+                                                <ListItemText inset
+                                                    primary={`Item ${itemIndex + 1}`}
+                                                    secondary={`$${item.cost.toFixed(2)}`}
+                                                />
+                                            </ListItem>
                                     })}
                                 </List>
                             })    
