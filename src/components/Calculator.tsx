@@ -4,6 +4,7 @@ import {
     Button,
     Divider,
     Grid,
+    IconButton,
     Input,
     InputAdornment,
     InputLabel,
@@ -15,7 +16,9 @@ import {
     TextField,
     Typography
 } from '@mui/material';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { Plate } from '../types/Plate';
+import { Expense } from '../types/Expense';
 
 interface props{
 
@@ -54,7 +57,8 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                     [...plates, 
                         {
                             id: i,
-                            total: 0
+                            total: 0,
+                            items: [],
                         }
                     ])
             }
@@ -90,6 +94,22 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             setItem(0);    
         }
     };
+
+    const deleteItem = (plate: Plate, item: Expense) => {
+        plate.items = plate.items.filter(items => items.id !== item.id);
+        plate.total -= item.cost;
+        plates.splice(plates.findIndex(oldplates => oldplates.id === plate.id), 1, plate)
+        setRemainder(remainder + item.cost);
+        setPlates(
+            [
+                ...plates
+            ]
+        )
+    }
+
+    React.useEffect(() => {
+        console.log(plates);
+    }, [plates]);
 
     const onChangeCost = React.useCallback((e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
         if (!isNaN(Number(e.currentTarget.value))){
@@ -145,7 +165,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         setSubtotal(0);
         setTax(0);
         setTip(0);
-        setPlates([{id: 0,total: 0}, { id:1, total:0}])
+        setPlates([{id: 0,total: 0, items: []}, { id:1, total:0, items: []}])
         setRevealSplit(false);
         setRevealTotal(false);
     };
@@ -159,7 +179,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     }, [subtotal])
 
     React.useEffect(() => {
-        setPlates([{id: 0,total: 0}, { id:1, total:0}])
+        setPlates([{id: 0,total: 0, items: []}, { id:1, total:0, items: []}])
     },[]);
 
     return(
@@ -273,7 +293,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         {        
                         plates.map((plate, index) => {
                             return <List>
-                                <ListItem
+                                    <ListItem
                                         key={index}
                                         >
                                         <ListItemAvatar>Person {index+1}</ListItemAvatar>
@@ -287,6 +307,21 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                             </Button>
                                         }
                                     </ListItem>
+                                    {plate.items?.map((item, itemIndex) => {
+                                        return <ListItem
+                                            key={item.id}
+                                            secondaryAction={
+                                                <IconButton onClick={() => deleteItem(plate, item)}>
+                                                    <DeleteOutlinedIcon/>
+                                                </IconButton>
+                                            }
+                                        >
+                                            <ListItemText
+                                                primary={`Item ${itemIndex + 1}`}
+                                                secondary={item.cost}
+                                            />
+                                        </ListItem>
+                                    })}
                                 </List>
                             })    
                         }
