@@ -15,6 +15,7 @@ import {
     TextField,
     Typography
 } from '@mui/material';
+import { Plate } from '../types/Plate';
 
 interface props{
 
@@ -24,7 +25,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     const [subtotal, setSubtotal] = React.useState<number>(0);
     const [tax, setTax] = React.useState<number>(0);
     const [tip, setTip] = React.useState<number>(0);
-    const [plates, setPlates] = React.useState<number[]>([]);
+    const [plates, setPlates] = React.useState<Plate[]>([]);
     const [total, setTotal] = React.useState<number>(0);
 
     const [remainder, setRemainder] = React.useState<number>(0);
@@ -34,10 +35,28 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     const [revealTotal, setRevealTotal] = React.useState<boolean>(false);
     const [revealSplit, setRevealSplit] = React.useState<boolean>(false);
 
+    // const formatToCurrency = (value: string) => {
+    //     if (value.length == 1){
+    //         return Number('.0' + value);
+    //     }
+    //     else if (value.length == 2){
+    //         return Number('.' + value);
+    //     }
+    //     else{
+    //         return Number(value.slice(0, value.length - 3) + '.' + value.slice(value.length-2));
+    //     }
+    // }
+
     const peopleInput = (group: number) => {
         if (plates.length < group){
             for(let i = plates.length; i < group; i++){
-                setPlates([...plates, 0])
+                setPlates(
+                    [...plates, 
+                        {
+                            id: i,
+                            total: 0
+                        }
+                    ])
             }
         }
         else if (plates.length > 2){
@@ -49,35 +68,24 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         return (Math.round((subtotal * (1 + tip/100) + tax) * 100) / 100);
     };
 
-    const calculatePerson = (plate: number) => {
+    const calculatePerson = (index: number) => {
         if(split === 'Evenly') {
             return ((total / plates.length ).toFixed(2));
         }
         else{
             return subtotal === 0 ? Number('0').toFixed(2) :
-            ((plate + plate/subtotal * (tax + (tip/100) * subtotal )).toFixed(2));
+            ((plates[index].total + plates[index].total/subtotal * (tax + (tip/100) * subtotal )).toFixed(2));
         }
     };
 
-    const splitBillType = (option: string) => {
-        switch(option){
-            case 'Evenly':
-                setSplit('Evenly');
-                setRevealTotal(true);
-                break;
-            case 'Itemize':
-                setSplit('Itemize');
-                setRemainder(subtotal);
-                setRevealTotal(true);
-                break;
-            default:
-                break;
-        }
-    }
-
     const addToBill = (index: number) => {
         if (remainder >= item) {
-            plates[index] += item;
+            var id = plates.findIndex(plate => plate.id === index);
+            plates[id].total += item;
+            plates[id].items?.push({
+                id: (Math.random() * 100).toString(),
+                cost: item
+            })
             setRemainder(remainder - item);
             setItem(0);    
         }
@@ -109,11 +117,35 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         setTip(Number(newValue));
     };
 
+    const splitBillType = (option: string) => {
+        switch(option){
+            case 'Evenly':
+                setSplit('Evenly');
+                break;
+            case 'Itemize':
+                setSplit('Itemize');
+                setRemainder(subtotal);
+                break;
+            default:
+                break;
+        }
+        setRevealTotal(true);
+    };
+
+    const onClickNext = () => {
+        if (tip === 0 && tax === 0 && subtotal === 0){
+
+        }
+        else{
+            setRevealSplit(true)
+        }
+    }
+
     const resetAll = () => {
         setSubtotal(0);
         setTax(0);
         setTip(0);
-        setPlates([0,0]);
+        setPlates([{id: 0,total: 0}, { id:1, total:0}])
         setRevealSplit(false);
         setRevealTotal(false);
     };
@@ -127,7 +159,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     }, [subtotal])
 
     React.useEffect(() => {
-        setPlates([0,0]);
+        setPlates([{id: 0,total: 0}, { id:1, total:0}])
     },[]);
 
     return(
@@ -190,7 +222,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
             <Grid container spacing={2} direction='row' justifyContent='center'>
                 <Grid item>
-                    <Button variant="contained" onClick={() => {setRevealSplit(true)}}>Next</Button>
+                    <Button variant="contained" onClick={onClickNext}>Next</Button>
                 </Grid>
                 <Grid item>
                     <Button variant='outlined' size='large' onClick={() => resetAll()}>Reset All</Button>
@@ -240,20 +272,22 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                     <List>
                         {        
                         plates.map((plate, index) => {
-                            return <ListItem
-                                    key={index}
-                                    >
-                                    <ListItemAvatar>Person {index+1}</ListItemAvatar>
-                                    <ListItemText>${calculatePerson(plate)}</ListItemText>
-                                    {split ==='Itemize' && 
-                                        <Button
-                                            disabled = {item > remainder || item === 0 || remainder < 0}
-                                            variant='contained' 
-                                            onClick={ () => {addToBill(index)} }>
-                                            Add
-                                        </Button>
-                                    }
-                                </ListItem>
+                            return <List>
+                                <ListItem
+                                        key={index}
+                                        >
+                                        <ListItemAvatar>Person {index+1}</ListItemAvatar>
+                                        <ListItemText>${calculatePerson(index)}</ListItemText>
+                                        {split ==='Itemize' && 
+                                            <Button
+                                                disabled = {item > remainder || item === 0 || remainder < 0}
+                                                variant='contained' 
+                                                onClick={ () => {addToBill(index)} }>
+                                                Add
+                                            </Button>
+                                        }
+                                    </ListItem>
+                                </List>
                             })    
                         }
                     </List>
