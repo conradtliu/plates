@@ -260,21 +260,32 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             </div>
 
             <div className='subTotal'>
-                <InputLabel htmlFor='standard-adornment-subtotal'>Subtotal</InputLabel>
-                <Input
-                    id='standard-adornment-subtotal'
+                <TextField
+                    variant='standard'
+                    label='Subtotal'
+                    placeholder='0.00'
                     value={subtotal}
                     onChange={(e) => onChangeCost(e, 'sub')}
-                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                    InputProps={{
+                        startAdornment:(<InputAdornment position="start">$</InputAdornment>)
+                    }}
+                    error={subtotalError !== ''}
+                    helperText={subtotalError}
                 />
             </div>
 
             <div className='tax'>
-            <InputLabel htmlFor='standard-adornment-subtotal'>Tax</InputLabel>
-                <Input
+                <TextField
+                    variant='standard'
+                    label='Tax'
+                    placeholder='0.00'
                     value={tax}
                     onChange={(e) => onChangeCost(e, 'tax')}
-                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                    InputProps={{
+                        startAdornment:(<InputAdornment position="start">$</InputAdornment>)
+                            }}
+                    error={taxError !== ''}
+                    helperText={taxError}
                 />
             </div>
 
@@ -339,6 +350,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         <TextField
                             variant='standard'
                             label='Item Cost'
+                            placeholder='0.00'
                             value={item}
                             onChange={(e) => onChangeCost(e, 'item')}
                             InputProps={{
