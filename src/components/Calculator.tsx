@@ -28,9 +28,16 @@ interface props{
 
 };
 
+type Bill = {
+    subtotal: number,
+    tax: number,
+    items: Expense[]
+}
+
 const Calculator: React.FC<props> = ({}): JSX.Element => {
-    const [subtotal, setSubtotal] = React.useState<number>(0);
-    const [tax, setTax] = React.useState<number>(0);
+    const [bill, setBill] = React.useState<Bill>({subtotal: 0, tax: 0, items: []});
+    const [subtotal, setSubtotal] = React.useState<string>('');
+    const [tax, setTax] = React.useState<string>('');
     const [tip, setTip] = React.useState<number>(0);
     const [plates, setPlates] = React.useState<Plate[]>([]);
     const [total, setTotal] = React.useState<number>(0);
@@ -68,7 +75,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     };
 
     const calculateTotal = () => {
-        return (Math.round((subtotal * (1 + tip/100) + tax) * 100) / 100);
+        return (Math.round((bill.subtotal * (1 + tip/100) + bill.tax) * 100) / 100);
     };
 
     const calculatePerson = (index: number) => {
@@ -76,37 +83,79 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             return ((total / plates.length ).toFixed(2));
         }
         else{
-            return subtotal === 0 ? Number('0').toFixed(2) :
-            ((plates[index].total + plates[index].total/subtotal * (tax + (tip/100) * subtotal )).toFixed(2));
+            return bill.subtotal === 0 ? Number('0').toFixed(2) :
+            ((plates[index].total + plates[index].total/bill.subtotal * (bill.tax + (tip/100) * bill.subtotal )).toFixed(2));
         }
     };
 
-    const validate = (field: string) => {
-        switch(field){
-            case 'item':
-                if (isCurrency(item)){
-                    Number(item) > remainder ? 
-                        setItemError('Item costs more than remainder of bill!') :
-                        setItemError('');
-                    return true;
-                }
-                else{
-                    setItemError("Invalid Entry, Please Adjust");
-                    return false;
-                }
+    const validateItem = () => {
+        if (isCurrency(item)){
+            Number(item) > remainder ? 
+                setItemError('Item costs more than remainder of bill!') :
+                setItemError('');
+            return true;
         }
-    }
+        else{
+            setItemError("Invalid Entry, Please Adjust");
+            return false;
+        }
+    };
+
+    const validateBill = () => {
+        var issues = 0;
+        const validBill : Bill = bill
+        if (isCurrency(subtotal)){
+            setSubtotalError('');
+            validBill.subtotal = Number(subtotal);
+            setSubtotal(Number(subtotal).toFixed(2));
+        }
+        else{
+            setSubtotalError('Invalid Entry, Please Adjust');
+            issues += 1;
+        }
+        if (isCurrency(tax)){
+            setTaxError('');
+            validBill.tax = Number(tax);
+            setTax(Number(tax).toFixed(2));
+        }
+        else{
+            if(tax === ''){
+                validBill.tax = 0;
+                setTax('0.00');
+                setTaxError('');
+            }
+            else{
+                setTaxError('Invalid Entry, Please Adjust');
+                issues += 1;    
+            }
+        }
+        if (issues == 0){
+            setBill(validBill);
+        }
+        return issues === 0;
+    };
 
     const addToBill = (index: number) => {
-        if(validate('item')){
+        if(validateItem()){
             var cost = Number(item);
             if (remainder >= cost) {
                 var id = plates.findIndex(plate => plate.id === index);
+                var itemId = (bill.items.length + 1).toString();
                 plates[id].total += cost;
                 plates[id].items?.push({
-                    id: (Math.random() * 100).toString(),
+                    id: itemId,
                     cost: cost
-                })
+                });
+                setBill({
+                    ...bill,
+                    items: [
+                        ...bill.items,
+                        {
+                            id: itemId,
+                            cost: cost
+                        }
+                    ]
+                });
                 setRemainder(remainder - cost);
                 setItem('');    
             }
@@ -114,20 +163,30 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     };
 
     const shareItem = (plateIndexes?: number[]) => {
-        if(validate('item')){
+        if(validateItem()){
             var cost = Number(item);
             if(cost > remainder || cost <= 0){
                 return;
             }
             if(!plateIndexes){
                 var split = Number((cost / plates.length).toFixed(2));
-                var splitId = (Math.random() * 100).toString();
+                var itemId = (bill.items.length + 1).toString();
                 plates.forEach(plate => {
                     plate.total += split;
                     plate.items.push({
-                        id: splitId,
+                        id: itemId,
                         cost: split
                     })
+                });
+                setBill({
+                    ...bill,
+                    items: [
+                        ...bill.items,
+                        {
+                            id: itemId,
+                            cost: cost
+                        }
+                    ]
                 });
                 setPlates([...plates]);
                 setRemainder(remainder - cost);
@@ -137,11 +196,22 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     };
 
     const deleteItem = (plate: Plate, item: Expense) => {
-        plate.items = plate.items.filter(items => items.id !== item.id);
-        plate.total -= item.cost;
-        plates.splice(plates.findIndex(oldplates => oldplates.id === plate.id), 1, plate)
+        var newPlates: Plate[] = [];
+        plates.map(p => {
+            if (p.items.find(i => i.id === item.id)){
+                p.items = p.items.filter(items => items.id !== item.id);
+                p.total -= item.cost;
+            }
+            newPlates.push(p);
+        });
+        // setBill({
+        //     ...bill,
+        //     items: [
+        //         ...bill.items.filter(i => i.id !== item.id)
+        //     ]
+        // });
         setRemainder(remainder + item.cost);
-        setPlates(plates);
+        setPlates(newPlates);
     };
 
     const clearPlates = () => {
@@ -152,37 +222,22 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             temp.push(plate);
         });
         setPlates(temp);
-        setRemainder(subtotal);
+        setRemainder(bill.subtotal);
     };
 
     const onChangeCost = React.useCallback((e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
-        if (!isNaN(Number(e.currentTarget.value))){
-            switch(field){
-                case 'sub':
-                    setSubtotal(Number(Number(e.currentTarget.value).toFixed(2)));
-                    break;
-                case 'tax':
-                    setTax(Number(e.currentTarget.value));
-                    break;
-                case 'tip':
-                    setTip(Number(e.currentTarget.value));
-                    break;
-                // case 'item':
-                //     setItem(Number(e.currentTarget.value));
-                //     break;
-            }
-        }
         switch (field) {
-            // case 'sub':
-            //     setSubtotal(e.currentTarget.value);
-            //     break;
-            // case 'tax':
-            //     setTax(e.currentTarget.value);
-            //     break;
-            // case 'tip':
-            //     if(!isNaN(Number(e.currentTarget))){
-            //         setTip(Number(e.currentTarget.value))
-            //     }
+            case 'sub':
+                setSubtotal(e.currentTarget.value);
+                break;
+            case 'tax':
+                setTax(e.currentTarget.value);
+                break;
+            case 'tip':
+                if(!isNaN(Number(e.currentTarget))){
+                    setTip(Number(e.currentTarget.value))
+                }
+                break;
             case 'item':
                 setItem(e.currentTarget.value);
                 break;
@@ -202,7 +257,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 break;
             case 'Itemize':
                 setSplit('Itemize');
-                setRemainder(subtotal);
+                setRemainder(bill.subtotal);
                 break;
             default:
                 break;
@@ -211,19 +266,18 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     };
 
     const onClickNext = () => {
-        if (tip === 0 && tax === 0 && subtotal === 0){
-
-        }
-        else{
+        if(validateBill()){
+            debugger;
             setTotal(calculateTotal());
             setRevealSplit(true);
         }
     };
 
     const resetAll = () => {
-        setSubtotal(0);
-        setTax(0);
+        setSubtotal('');
+        setTax('');
         setTip(0);
+        setBill({subtotal:0, tax: 0, items: []});
         setPlates([{id: 0,total: 0, items: []}, { id:1, total:0, items: []}]);
         setSplit('');
         setRevealSplit(false);
@@ -235,14 +289,14 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     },[tip]);
 
     React.useEffect(() => {
-        setRemainder(subtotal);
+        setRemainder(bill.subtotal);
         setItem('');
         setItemError('');
-    }, [subtotal]);
+    }, [bill.subtotal]);
 
     React.useEffect(()=> {
         clearPlates();
-    }, [subtotal, tax]);
+    }, [bill.subtotal, bill.tax]);
 
     React.useEffect(() => {
         setPlates([{id: 0,total: 0, items: []}, { id:1, total:0, items: []}])
@@ -358,6 +412,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             }}
                             error={itemError !== ''}
                             helperText={itemError}
+                            disabled={remainder === 0}
                         />
                         {Number(item) > 0 && <Button variant='contained' onClick={() => {shareItem()}}>Share Item</Button>}
                     </div>}
@@ -403,7 +458,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                                 }
                                             >
                                                 <ListItemText inset
-                                                    primary={`Item ${itemIndex + 1}`}
+                                                    primary={`Item ${item.id}`}
                                                     secondary={`$${item.cost.toFixed(2)}`}
                                                 />
                                             </ListItem>
