@@ -3,7 +3,13 @@ import {
     Avatar,
     Box,
     Button,
+    Checkbox,
     Collapse,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     Divider,
     Grid,
     IconButton,
@@ -13,6 +19,8 @@ import {
     List,
     ListItem,
     ListItemAvatar,
+    ListItemButton,
+    ListItemIcon,
     ListItemText,
     Slider,
     TextField,
@@ -23,6 +31,7 @@ import { Plate } from '../types/Plate';
 import { Expense } from '../types/Expense';
 import { StyledAvatar } from './StyledAvatar';
 import { isCurrency } from '../HelperMethods';
+import { CheckBox } from '@mui/icons-material';
 
 interface props{
 
@@ -45,10 +54,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     const [remainder, setRemainder] = React.useState<number>(0);
     const [item, setItem] = React.useState<string>('');
     const [split, setSplit] = React.useState<string>('');
+    const [splitPlates, setSplitPlates] = React.useState<number[]>([]);
 
     const [revealTotal, setRevealTotal] = React.useState<boolean>(false);
     const [revealSplit, setRevealSplit] = React.useState<boolean>(false);
-    const [open, setOpen] = React.useState<boolean>();
+    const [openList, setOpenList] = React.useState<boolean>(false);
+    const [openSplit, setOpenSplit] = React.useState<boolean>(false);
 
     //Errors
     const [subtotalError, setSubtotalError] = React.useState<string>('');
@@ -168,7 +179,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             if(cost > remainder || cost <= 0){
                 return;
             }
-            if(!plateIndexes){
+            if(splitPlates.length === 0){
                 var split = Number((cost / plates.length).toFixed(2));
                 var itemId = (bill.items.length + 1).toString();
                 plates.forEach(plate => {
@@ -191,14 +202,50 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 setPlates([...plates]);
                 setRemainder(remainder - cost);
             }
+            else{
+                var split = Number((cost / splitPlates.length).toFixed(2));
+                var itemId = (bill.items.length + 1).toString();
+                plates.forEach((plate) => {
+                    if (splitPlates.includes(Number(plate.id))){
+                        plate.total += split;
+                        plate.items.push({
+                            id: itemId,
+                            cost: split
+                        })
+                    }
+                });
+                setBill({
+                    ...bill,
+                    items: [
+                        ...bill.items,
+                        {
+                            id: itemId,
+                            cost: cost
+                        }
+                    ]
+                });
+                setPlates([...plates]);
+                setRemainder(remainder - cost);
+            }
+            setSplitPlates([]);
             setItem('');
+            handleCloseSplit();
         }
     };
 
-    const deleteItem = (plate: Plate, item: Expense) => {
+    const addToPlates = (value: number) => {
+        if (splitPlates.includes(value)){
+            setSplitPlates(splitPlates.filter(split => split !== value));
+        }
+        else{
+            setSplitPlates([...splitPlates, value]);
+        }
+    }
+
+    const deleteItem = (item: Expense) => {
         var newPlates: Plate[] = [];
         plates.map(p => {
-            if (p.items.find(i => i.id === item.id)){
+            if (p.items.findIndex(i => i.id === item.id) > -1){
                 p.items = p.items.filter(items => items.id !== item.id);
                 p.total -= item.cost;
             }
@@ -271,6 +318,17 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             setTotal(calculateTotal());
             setRevealSplit(true);
         }
+    };
+
+    const handleOpenSplit = () => {
+        if(validateItem()){
+            setItem(Number(item).toFixed(2));
+            setOpenSplit(true);
+        }
+    };
+
+    const handleCloseSplit = () => {
+        setOpenSplit(false);
     };
 
     const resetAll = () => {
@@ -414,7 +472,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             helperText={itemError}
                             disabled={remainder === 0}
                         />
-                        {Number(item) > 0 && <Button variant='contained' onClick={() => {shareItem()}}>Share Item</Button>}
+                        {Number(item) > 0 && <Button variant='contained' onClick={handleOpenSplit}>Share Item</Button>}
                     </div>}
                 </div>
             </>
@@ -433,7 +491,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                         key={index}
                                     >
                                         <ListItemAvatar
-                                            onClick={() => setOpen(!open)}
+                                            onClick={() => setOpenList(!openList)}
 
                                         ><StyledAvatar>P{index+1}</StyledAvatar></ListItemAvatar>
                                         <ListItemText>${calculatePerson(index)}</ListItemText>
@@ -447,12 +505,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                         }
                                     </ListItem>
                                     {split === 'Itemize' && 
-                                    <Collapse in={open} unmountOnExit>
+                                    <Collapse in={openList} unmountOnExit>
                                         {plate.items?.map((item, itemIndex) => {
                                             return <ListItem
                                                 key={item.id}
                                                 secondaryAction={
-                                                    <IconButton onClick={() => deleteItem(plate, item)}>
+                                                    <IconButton onClick={() => deleteItem(item)}>
                                                         <DeleteOutlinedIcon/>
                                                     </IconButton>
                                                 }
@@ -475,6 +533,46 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                     <label>Grand Total</label>
                     <span>${total.toFixed(2)}</span>
                 </div>
+
+                <Dialog 
+                    open={openSplit} 
+                    sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+                    maxWidth="sm" 
+                    onClose={handleCloseSplit}
+                >
+                    <DialogTitle>Split Item</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Select the plates to split this item across. If none are selected, the item will be split across everyone.
+                        </DialogContentText>
+                        <Divider/>
+                        <br/>
+                        <DialogContentText sx={{fontWeight:'bold'}}>Item Cost:${item}</DialogContentText>
+                        <Box sx={{padding: '0%'}}>
+                            <List>
+                                {plates.map(plate => {
+                                    return <ListItem
+                                            key={plate.id}
+                                            disablePadding
+                                        >
+                                            <ListItemButton role={undefined} onClick={()=>{addToPlates(Number(plate.id))}}>
+                                                <ListItemIcon>
+                                                    <Checkbox
+                                                        checked={splitPlates.findIndex(p => p === Number(plate.id)) > -1}
+                                                    />
+                                                </ListItemIcon>
+                                                Plate {Number(plate.id) + 1}
+                                            </ListItemButton>
+                                        </ListItem>
+                                })}
+                            </List>
+                        </Box>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseSplit}>Cancel</Button>
+                        <Button onClick={() => {shareItem()}}>Split</Button>
+                    </DialogActions>
+                </Dialog>
             </>
             }
 
