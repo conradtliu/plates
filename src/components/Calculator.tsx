@@ -449,10 +449,14 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                     <Typography variant='h3'>Split Bill</Typography>
                     <br></br>
                     {//split === '' && 
-                        <>
-                            <Button variant='contained' onClick={() => splitBillType('Evenly')}>Split Evenly</Button>
-                            <Button variant='contained' onClick={() => splitBillType('Itemize')}>Split By Item</Button>
-                        </>
+                        <Grid container spacing={2} direction='row' justifyContent='center'>
+                            <Grid item>
+                                <Button variant='contained' onClick={() => splitBillType('Evenly')}>Split Evenly</Button>
+                            </Grid>
+                            <Grid item>
+                                <Button variant='contained' onClick={() => splitBillType('Itemize')}>Split By Item</Button>
+                            </Grid>
+                        </Grid>
                     }
                     <br></br>
                     {split === 'Itemize' && <div>
