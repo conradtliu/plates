@@ -1,4 +1,4 @@
-import { Expense } from './Expense';
+import { Expense } from '../types';
 
 export type Plate = {
     id: string | number,

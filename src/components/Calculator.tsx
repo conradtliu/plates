@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    Avatar,
     Box,
     Button,
     Checkbox,
@@ -27,21 +26,14 @@ import {
     Typography
 } from '@mui/material';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import { Plate } from '../types/Plate';
-import { Expense } from '../types/Expense';
 import { StyledAvatar } from './StyledAvatar';
 import { isCurrency } from '../HelperMethods';
-import { CheckBox } from '@mui/icons-material';
+import Receipt from './Receipt';
+import { Bill, Plate, Expense } from '../types/';
+import * as Messages from '../Messages';
 
 interface props{
-
 };
-
-type Bill = {
-    subtotal: number,
-    tax: number,
-    items: Expense[]
-}
 
 const Calculator: React.FC<props> = ({}): JSX.Element => {
     const [bill, setBill] = React.useState<Bill>({subtotal: 0, tax: 0, items: []});
@@ -60,11 +52,11 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     const [revealSplit, setRevealSplit] = React.useState<boolean>(false);
     const [openList, setOpenList] = React.useState<boolean>(false);
     const [openSplit, setOpenSplit] = React.useState<boolean>(false);
+    const [showReceipt, setShowReceipt] = React.useState<boolean>(false);
 
     //Errors
     const [subtotalError, setSubtotalError] = React.useState<string>('');
     const [taxError, setTaxError] = React.useState<string>('');
-    const [tipError, setTipError] = React.useState<string>('');
     const [itemError, setItemError] = React.useState<string>('');
 
     const peopleInput = (group: number) => {
@@ -91,12 +83,17 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
     const calculatePerson = (index: number) => {
         if(split === 'Evenly') {
-            return ((total / plates.length ).toFixed(2));
+            const cost = ((total / plates.length ).toFixed(2))
+            return cost;
         }
         else{
             return bill.subtotal === 0 ? Number('0').toFixed(2) :
             ((plates[index].total + plates[index].total/bill.subtotal * (bill.tax + (tip/100) * bill.subtotal )).toFixed(2));
         }
+    };
+
+    const splitEvenly = () => {
+        setPlates(plates.map(plate => {plate.total = Number((total / plates.length).toFixed(2)); return plate}))
     };
 
     const validateItem = () => {
@@ -173,15 +170,16 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         }
     };
 
-    const shareItem = (plateIndexes?: number[]) => {
+    const shareItem = () => {
         if(validateItem()){
             var cost = Number(item);
             if(cost > remainder || cost <= 0){
                 return;
             }
+            const split = splitPlates.length === 0 ? Number((cost / plates.length).toFixed(2)) : Number((cost / splitPlates.length).toFixed(2));
+            const itemId = (bill.items.length + 1).toString();
+
             if(splitPlates.length === 0){
-                var split = Number((cost / plates.length).toFixed(2));
-                var itemId = (bill.items.length + 1).toString();
                 plates.forEach(plate => {
                     plate.total += split;
                     plate.items.push({
@@ -189,22 +187,8 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         cost: split
                     })
                 });
-                setBill({
-                    ...bill,
-                    items: [
-                        ...bill.items,
-                        {
-                            id: itemId,
-                            cost: cost
-                        }
-                    ]
-                });
-                setPlates([...plates]);
-                setRemainder(remainder - cost);
             }
             else{
-                var split = Number((cost / splitPlates.length).toFixed(2));
-                var itemId = (bill.items.length + 1).toString();
                 plates.forEach((plate) => {
                     if (splitPlates.includes(Number(plate.id))){
                         plate.total += split;
@@ -214,19 +198,19 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         })
                     }
                 });
-                setBill({
-                    ...bill,
-                    items: [
-                        ...bill.items,
-                        {
-                            id: itemId,
-                            cost: cost
-                        }
-                    ]
-                });
-                setPlates([...plates]);
-                setRemainder(remainder - cost);
             }
+            setBill({
+                ...bill,
+                items: [
+                    ...bill.items,
+                    {
+                        id: itemId,
+                        cost: cost
+                    }
+                ]
+            });
+            setPlates([...plates]);
+            setRemainder(remainder - cost);
             setSplitPlates([]);
             setItem('');
             handleCloseSplit();
@@ -251,13 +235,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             }
             newPlates.push(p);
         });
-        // setBill({
-        //     ...bill,
-        //     items: [
-        //         ...bill.items.filter(i => i.id !== item.id)
-        //     ]
-        // });
-        setRemainder(remainder + item.cost);
+        setRemainder(remainder + bill.items.find(i => item.id == i.id)!.cost);
         setPlates(newPlates);
     };
 
@@ -301,9 +279,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         switch(option){
             case 'Evenly':
                 setSplit('Evenly');
+                splitEvenly();
+                setRemainder(0);
                 break;
             case 'Itemize':
                 setSplit('Itemize');
+                clearPlates();
                 setRemainder(bill.subtotal);
                 break;
             default:
@@ -314,7 +295,6 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
     const onClickNext = () => {
         if(validateBill()){
-            debugger;
             setTotal(calculateTotal());
             setRevealSplit(true);
         }
@@ -331,18 +311,42 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         setOpenSplit(false);
     };
 
+    const handleCloseReceipt = () => {
+        setShowReceipt(false);
+    }
+
     const resetAll = () => {
+        setBill({subtotal:0, tax: 0, items: []});
+        setPlates([{id: 0,total: 0, items: []}, { id:1, total:0, items: []}]);
+
         setSubtotal('');
         setTax('');
         setTip(0);
-        setBill({subtotal:0, tax: 0, items: []});
-        setPlates([{id: 0,total: 0, items: []}, { id:1, total:0, items: []}]);
         setSplit('');
-        setRevealSplit(false);
+        setTotal(0);
+        setRemainder(0);
+        setItem('');
+        setSplitPlates([]);
+
         setRevealTotal(false);
+        setRevealSplit(false);
+        setOpenList(false);
+        setOpenSplit(false);
+        setShowReceipt(false);
     };
 
     React.useEffect(() => {
+        if(bill.subtotal > 0 && remainder === 0){
+            setShowReceipt(true);
+        }
+    }, [remainder]);
+
+    React.useEffect(() => {
+        setBill({...bill, plates: plates});
+    }, [plates])
+
+    React.useEffect(() => {
+        setBill({...bill, tip: tip});
         setTotal(calculateTotal());
     },[tip]);
 
@@ -547,7 +551,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                     <DialogTitle>Split Item</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            Select the plates to split this item across. If none are selected, the item will be split across everyone.
+                            {Messages.shareItem}
                         </DialogContentText>
                         <Divider/>
                         <br/>
@@ -574,7 +578,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={handleCloseSplit}>Cancel</Button>
-                        <Button onClick={() => {shareItem()}}>Split</Button>
+                        <Button onClick={() => {shareItem()}}>Share</Button>
                     </DialogActions>
                 </Dialog>
             </>
@@ -584,6 +588,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
             </Box>
 
+            <Receipt
+                open={showReceipt}
+                bill={bill}
+                handleClose={handleCloseReceipt}
+                reset={resetAll}
+            />
         </div>
     )
 }
