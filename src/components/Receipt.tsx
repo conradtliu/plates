@@ -1,17 +1,18 @@
 import React from "react";
-import { Backdrop, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, List, ListItem, Stack, Typography } from "@mui/material";
+import { Backdrop, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, List, ListItem, Slider, Stack, Typography } from "@mui/material";
 import {Bill} from '../types';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 
 interface props{
     open: boolean,
-    handleClose() : void,
     bill: Bill,
-    reset() : void
+    reset() : void,
+    handleClose() : void,
+    adjustTip(_: Event, newValue: number | number[]): void
 }
 
 function Receipt(props: React.PropsWithChildren<props>){
-    const { open, handleClose, bill, reset } = props;
+    const { open, handleClose, bill, reset, adjustTip } = props;
 
     const dateTime = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString();
@@ -53,12 +54,23 @@ function Receipt(props: React.PropsWithChildren<props>){
                         </Stack>
                         <Divider/>
                         <br/>
+                        <Stack direction='row' justifyContent='space-between'>
+                            <Slider
+                                sx={{width: '50%', justifyContent: 'center', justifySelf: 'center'}}
+                                min={0}
+                                max={100}
+                                value={bill.tip}
+                                onChange={adjustTip}
+                                valueLabelDisplay='auto'
+                                valueLabelFormat={(number) => `${number}%`}
+                                marks={[{value: 0, label: 'Tip'}]}
+                            />
                         <Typography fontWeight='bold' textAlign='end'>Total: ${(bill.subtotal + bill.tax + Number(bill.tip) * bill.subtotal / 100).toFixed(2)}</Typography>
+                        </Stack>
                     </>
                 </DialogContent>
                 <DialogActions sx={{justifyContent: 'space-between'}}>
                     <Button onClick={handleClose}>Cancel</Button>
-                    {/* <Button>Adjust Tip</Button> */}
                     <Button onClick={reset}>Start Over</Button>
                 </DialogActions>
             </Dialog>

@@ -78,7 +78,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     };
 
     const calculateTotal = () => {
-        return (Math.round((bill.subtotal * (1 + tip/100) + bill.tax) * 100) / 100);
+        return (Math.round((bill.subtotal * (1 + bill.tip!/100) + bill.tax) * 100) / 100);
     };
 
     const calculatePerson = (index: number) => {
@@ -88,7 +88,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
         }
         else{
             return bill.subtotal === 0 ? Number('0').toFixed(2) :
-            ((plates[index].total + plates[index].total/bill.subtotal * (bill.tax + (tip/100) * bill.subtotal )).toFixed(2));
+            ((plates[index].total + plates[index].total/bill.subtotal * (bill.tax + (bill.tip!/100) * bill.subtotal )).toFixed(2));
         }
     };
 
@@ -584,6 +584,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 bill={bill}
                 handleClose={handleCloseReceipt}
                 reset={resetAll}
+                adjustTip={onChangeTip}
             />
         </div>
     )
