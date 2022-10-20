@@ -40,7 +40,7 @@ function Receipt(props: React.PropsWithChildren<props>){
                         {bill.plates?.map(plate => {
                             return <Stack direction='row' justifyContent='space-between'>
                                     <Typography>Person {Number(plate.id)+1}</Typography>
-                                    <Typography>${plate.total.toFixed(2)}</Typography>
+                                    <Typography>${(plate.total + (bill.tax + (Number(bill.tip)/ 100) * bill.subtotal)* plate.total/bill.subtotal).toFixed(2)}</Typography>
                                 </Stack>
                         })}
                         <br/>
@@ -48,13 +48,17 @@ function Receipt(props: React.PropsWithChildren<props>){
                         <br/>
                         <Stack direction='row' justifyContent='space-between'>
                             <Typography>Tax: ${bill.tax.toFixed(2)}</Typography>
-                            <Typography>Tip: ${(Number(bill.tip) * bill.subtotal/100).toFixed(2)}</Typography>
-                            <Typography fontWeight='bold'>Total: ${(bill.subtotal + bill.tax + Number(bill.tip) * bill.subtotal / 100).toFixed(2)}</Typography>
+                            <Typography>Tip ({bill.tip}%): ${(Number(bill.tip) * bill.subtotal/100).toFixed(2)}</Typography>
+                            <Typography>Subtotal: ${bill.subtotal.toFixed(2)}</Typography>
                         </Stack>
+                        <Divider/>
+                        <br/>
+                        <Typography fontWeight='bold' textAlign='end'>Total: ${(bill.subtotal + bill.tax + Number(bill.tip) * bill.subtotal / 100).toFixed(2)}</Typography>
                     </>
                 </DialogContent>
-                <DialogActions>
-                    {/* <Button onClick={handleClose}>Cancel</Button> */}
+                <DialogActions sx={{justifyContent: 'space-between'}}>
+                    <Button onClick={handleClose}>Cancel</Button>
+                    {/* <Button>Adjust Tip</Button> */}
                     <Button onClick={reset}>Start Over</Button>
                 </DialogActions>
             </Dialog>

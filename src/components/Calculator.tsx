@@ -281,6 +281,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 setSplit('Evenly');
                 splitEvenly();
                 setRemainder(0);
+                setShowReceipt(true);
                 break;
             case 'Itemize':
                 setSplit('Itemize');
@@ -417,10 +418,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         max={100}
                         value={tip}
                         onChange={onChangeTip}
+                        valueLabelDisplay='auto'
+                        valueLabelFormat={(number) => `${number}%`}
                     />
                     </Grid>
                     <Grid item>
-                    <Input
+                    {/* <Input
                         value={tip}
                         onChange={(e) => onChangeCost(e,'tip')}
                         inputProps= {{
@@ -430,7 +433,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             type: 'number'
                         }}
                         endAdornment={<InputAdornment position='end'>%</InputAdornment>}
-                    />
+                    /> */}
                     </Grid>
                 </Grid>
                 </Box>
@@ -535,12 +538,14 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                             })    
                         }
                     </List>
+                    <div style={{justifyContent: 'start', alignItems: 'start'}}>
+                        <Button variant='contained' onClick={() => {clearPlates(); setBill({...bill, items: []})}}>Clear Plates</Button>
+                    </div>
                 </div>
-
-                <div>
+                {/* <div>
                     <label>Grand Total</label>
                     <span>${total.toFixed(2)}</span>
-                </div>
+                </div> */}
 
                 <Dialog 
                     open={openSplit} 
