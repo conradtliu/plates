@@ -49,7 +49,7 @@ function Receipt(props: React.PropsWithChildren<props>){
                         <br/>
                         <Stack direction='row' justifyContent='space-between'>
                             <Typography>Tax: ${bill.tax.toFixed(2)}</Typography>
-                            <Typography>Tip ({bill.tip}%): ${(Number(bill.tip) * bill.subtotal/100).toFixed(2)}</Typography>
+                            <Typography>Tip: ({bill.tip}%): ${(Number(bill.tip) * bill.subtotal/100).toFixed(2)}</Typography>
                             <Typography>Subtotal: ${bill.subtotal.toFixed(2)}</Typography>
                         </Stack>
                         <Divider/>
