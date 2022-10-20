@@ -12,7 +12,6 @@ import {
     Divider,
     Grid,
     IconButton,
-    Input,
     InputAdornment,
     InputLabel,
     List,
@@ -99,12 +98,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     const validateItem = () => {
         if (isCurrency(item)){
             Number(item) > remainder ? 
-                setItemError('Item costs more than remainder of bill!') :
+                setItemError(Messages.ItemGreaterError) :
                 setItemError('');
             return true;
         }
         else{
-            setItemError("Invalid Entry, Please Adjust");
+            setItemError(Messages.InvalidInputError);
             return false;
         }
     };
@@ -118,7 +117,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             setSubtotal(Number(subtotal).toFixed(2));
         }
         else{
-            setSubtotalError('Invalid Entry, Please Adjust');
+            setSubtotalError(Messages.InvalidInputError);
             issues += 1;
         }
         if (isCurrency(tax)){
@@ -133,7 +132,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 setTaxError('');
             }
             else{
-                setTaxError('Invalid Entry, Please Adjust');
+                setTaxError(Messages.InvalidInputError);
                 issues += 1;    
             }
         }
@@ -441,16 +440,14 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 <div>
                     <Typography variant='h3'>Split Bill</Typography>
                     <br></br>
-                    {//split === '' && 
-                        <Grid container spacing={2} direction='row' justifyContent='center'>
-                            <Grid item>
-                                <Button variant='contained' onClick={() => splitBillType('Evenly')}>Split Evenly</Button>
-                            </Grid>
-                            <Grid item>
-                                <Button variant='contained' onClick={() => splitBillType('Itemize')}>Split By Item</Button>
-                            </Grid>
+                    <Grid container spacing={2} direction='row' justifyContent='center'>
+                        <Grid item>
+                            <Button variant='contained' onClick={() => splitBillType('Evenly')}>Split Evenly</Button>
                         </Grid>
-                    }
+                        <Grid item>
+                            <Button variant='contained' onClick={() => splitBillType('Itemize')}>Split By Item</Button>
+                        </Grid>
+                    </Grid>
                     <br></br>
                     {split === 'Itemize' && <div>
                         <span>Remainder: ${remainder.toFixed(2)}</span>
@@ -528,10 +525,6 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         <Button variant='contained' onClick={() => {clearPlates(); setBill({...bill, items: []})}}>Clear Plates</Button>
                     </div>
                 </div>
-                {/* <div>
-                    <label>Grand Total</label>
-                    <span>${total.toFixed(2)}</span>
-                </div> */}
 
                 <Dialog 
                     open={openSplit} 
