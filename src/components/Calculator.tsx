@@ -408,34 +408,20 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
             <div>
                 <Box sx={{width: '100%', justifyContent: 'center'}}>
-            <InputLabel>Tip:</InputLabel>
-                <Grid container spacing={2}  alignItems='center' className='tip'>
-                    <Grid item/>
-                    <Grid item xs>
-                    <Slider
-                        sx={{width: '50%', justifyContent: 'center', justifySelf: 'center'}}
-                        min={0}
-                        max={100}
-                        value={tip}
-                        onChange={onChangeTip}
-                        valueLabelDisplay='auto'
-                        valueLabelFormat={(number) => `${number}%`}
-                    />
+                    <InputLabel>Tip:</InputLabel>
+                    <Grid container spacing={2}  alignItems='center' className='tip'>
+                        <Grid item xs>
+                            <Slider
+                                sx={{width: '50%', justifyContent: 'center', justifySelf: 'center'}}
+                                min={0}
+                                max={100}
+                                value={tip}
+                                onChange={onChangeTip}
+                                valueLabelDisplay='auto'
+                                valueLabelFormat={(number) => `${number}%`}
+                            />
+                        </Grid>
                     </Grid>
-                    <Grid item>
-                    {/* <Input
-                        value={tip}
-                        onChange={(e) => onChangeCost(e,'tip')}
-                        inputProps= {{
-                            step: 5,
-                            min: 0,
-                            max: 100,
-                            type: 'number'
-                        }}
-                        endAdornment={<InputAdornment position='end'>%</InputAdornment>}
-                    /> */}
-                    </Grid>
-                </Grid>
                 </Box>
             </div>
 
