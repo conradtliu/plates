@@ -164,7 +164,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         }
                     ]
                 });
-                setRemainder(remainder - cost);
+                setRemainder(Math.round((remainder - cost)*100)/100);
                 setItem('');    
             }
         }
@@ -210,7 +210,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                 ]
             });
             setPlates([...plates]);
-            setRemainder(remainder - cost);
+            setRemainder(Math.round((remainder - cost)*100)/100);
             setSplitPlates([]);
             setItem('');
             handleCloseSplit();
@@ -235,7 +235,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             }
             newPlates.push(p);
         });
-        setRemainder(remainder + bill.items.find(i => item.id == i.id)!.cost);
+        setRemainder(remainder + bill.items.find(i => item.id === i.id)!.cost);
         setPlates(newPlates);
     };
 
