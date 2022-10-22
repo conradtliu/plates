@@ -49,7 +49,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
     const [revealTotal, setRevealTotal] = React.useState<boolean>(false);
     const [revealSplit, setRevealSplit] = React.useState<boolean>(false);
-    const [openList, setOpenList] = React.useState<boolean>(false);
+    const [openList, setOpenList] = React.useState<number[]>([]);
     const [openSplit, setOpenSplit] = React.useState<boolean>(false);
     const [showReceipt, setShowReceipt] = React.useState<boolean>(false);
 
@@ -92,7 +92,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
     };
 
     const splitEvenly = () => {
-        setPlates(plates.map(plate => {plate.total = Number((total / plates.length).toFixed(2)); return plate}))
+        setPlates(plates.map(plate => {plate.total = Number((bill.subtotal / plates.length).toFixed(2)); return plate}));
     };
 
     const validateItem = () => {
@@ -313,6 +313,12 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
     const handleCloseReceipt = () => {
         setShowReceipt(false);
+    };
+
+    const toggleList = (value: number) => {
+        !openList.includes(value) ? 
+        setOpenList([...openList, value]) : 
+        setOpenList(openList.filter(id => id !== value));
     }
 
     const resetAll = () => {
@@ -330,7 +336,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
         setRevealTotal(false);
         setRevealSplit(false);
-        setOpenList(false);
+        setOpenList([]);
         setOpenSplit(false);
         setShowReceipt(false);
     };
@@ -485,10 +491,9 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                         key={index}
                                     >
                                         <ListItemAvatar
-                                            onClick={() => setOpenList(!openList)}
-
+                                            onClick={() => {toggleList(Number(plate.id))}}
                                         ><StyledAvatar>P{index+1}</StyledAvatar></ListItemAvatar>
-                                        <ListItemText>${calculatePerson(index)}</ListItemText>
+                                        <ListItemText><Typography sx={{fontWeight:'bold', color: 'primary.main'}}>${calculatePerson(index)}</Typography></ListItemText>
                                         {split ==='Itemize' && 
                                             <Button
                                                 disabled = {Number(item) > remainder || Number(item) === 0 || remainder < 0}
@@ -499,8 +504,8 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                         }
                                     </ListItem>
                                     {split === 'Itemize' && 
-                                    <Collapse in={openList} unmountOnExit>
-                                        {plate.items?.map((item, itemIndex) => {
+                                    <Collapse in={openList.includes(Number(plate.id))} unmountOnExit>
+                                        {plate.items?.map((item) => {
                                             return <ListItem
                                                 key={item.id}
                                                 secondaryAction={
