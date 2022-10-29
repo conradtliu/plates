@@ -30,6 +30,7 @@ import { isCurrency } from '../HelperMethods';
 import Receipt from './Receipt';
 import { Bill, Plate, Expense } from '../types/';
 import * as Messages from '../Messages';
+import { NumberInput } from './NumberInput';
 
 interface props{
 };
@@ -313,6 +314,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
 
     const handleCloseReceipt = () => {
         setShowReceipt(false);
+        resetAll();
     };
 
     const toggleList = (value: number) => {
@@ -382,30 +384,20 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
             </div>
 
             <div className='subTotal'>
-                <TextField
-                    variant='standard'
+                <NumberInput
                     label='Subtotal'
-                    placeholder='0.00'
                     value={subtotal}
                     onChange={(e) => onChangeCost(e, 'sub')}
-                    InputProps={{
-                        startAdornment:(<InputAdornment position="start">$</InputAdornment>)
-                    }}
                     error={subtotalError !== ''}
                     helperText={subtotalError}
                 />
             </div>
 
             <div className='tax'>
-                <TextField
-                    variant='standard'
+                <NumberInput
                     label='Tax'
-                    placeholder='0.00'
                     value={tax}
                     onChange={(e) => onChangeCost(e, 'tax')}
-                    InputProps={{
-                        startAdornment:(<InputAdornment position="start">$</InputAdornment>)
-                            }}
                     error={taxError !== ''}
                     helperText={taxError}
                 />
@@ -459,15 +451,10 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                         <span>Remainder: ${remainder.toFixed(2)}</span>
                         <br></br>
                         <br></br>
-                        <TextField
-                            variant='standard'
+                        <NumberInput
                             label='Item Cost'
-                            placeholder='0.00'
                             value={item}
                             onChange={(e) => onChangeCost(e, 'item')}
-                            InputProps={{
-                                startAdornment:(<InputAdornment position="start">$</InputAdornment>)
-                            }}
                             error={itemError !== ''}
                             helperText={itemError}
                             disabled={remainder === 0}
@@ -517,6 +504,7 @@ const Calculator: React.FC<props> = ({}): JSX.Element => {
                                                 <ListItemText inset
                                                     primary={`Item ${item.id}`}
                                                     secondary={`$${item.cost.toFixed(2)}`}
+                                                    primaryTypographyProps={{}}
                                                 />
                                             </ListItem>
                                     })}

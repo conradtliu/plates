@@ -2,6 +2,7 @@ import React from "react";
 import { Backdrop, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, List, ListItem, Slider, Stack, Typography } from "@mui/material";
 import {Bill} from '../types';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
+import { calculateIndividualBill } from "../HelperMethods";
 
 interface props{
     open: boolean,
@@ -41,7 +42,7 @@ function Receipt(props: React.PropsWithChildren<props>){
                         {bill.plates?.map(plate => {
                             return <Stack direction='row' justifyContent='space-between'>
                                     <Typography>Person {Number(plate.id)+1}</Typography>
-                                    <Typography>${(plate.total + (bill.tax + (Number(bill.tip)/ 100) * bill.subtotal)* plate.total/bill.subtotal).toFixed(2)}</Typography>
+                                    <Typography>${calculateIndividualBill(plate.total, bill.tax, bill.tip!, bill.subtotal)}</Typography>
                                 </Stack>
                         })}
                         <br/>
